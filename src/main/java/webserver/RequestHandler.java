@@ -1,10 +1,14 @@
 package webserver;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+
+import auth.AuthFilter;
+import controller.FrontController;
+import http.HttpRequest;
+import http.HttpResponse;
+import http.ResponseHeaderMaker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +18,14 @@ public class RequestHandler implements Runnable {
 
     private Socket connection;
 
+    private final FrontController frontController;
+
+    private final AuthFilter authFilter;
+
     public RequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
+        this.frontController = new FrontController();
+        this.authFilter = new AuthFilter();
     }
 
     public void run() {
@@ -25,31 +35,20 @@ public class RequestHandler implements Runnable {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = "Hello World".getBytes();
-            response200Header(dos, body.length);
-            responseBody(dos, body);
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-        }
-    }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
-        try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-        }
-    }
+            HttpRequest request = new HttpRequest(in); //http request 정보 가져오기
+            request.print(); //http request 정보 출력
 
-    private void responseBody(DataOutputStream dos, byte[] body) {
-        try {
-            dos.write(body, 0, body.length);
-            dos.flush();
-        } catch (IOException e) {
+            authFilter.doFilter(request);
+            HttpResponse response = new HttpResponse(dos);
+
+            frontController.process(request, response);
+
+            response.send();
+
+        } catch (IOException | InvocationTargetException | IllegalAccessException e) {
             logger.error(e.getMessage());
         }
     }
 }
+
