@@ -1,8 +1,8 @@
-# java-was-2023
+## WAS 프로젝트
 
-Java Web Application Server 2023
+<img width="810" alt="스크린샷 2024-10-07 오후 8 04 05" src="https://github.com/user-attachments/assets/e64a0d0f-b622-4f8c-a18e-56423e4b5ac3">
 
-## 프로젝트 정보 
-
-이 프로젝트는 우아한 테크코스 박재성님의 허가를 받아 https://github.com/woowacourse/jwp-was 
-를 참고하여 작성되었습니다.
+- FixedThreadPool로 요청 처리
+- HTTP 요청 Parsing
+- Front Controller 구현, Reflection으로 실행
+- 독자적 Markup 생성
